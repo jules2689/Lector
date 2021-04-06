@@ -41,26 +41,26 @@ class KindleBook(object):
   """
 
   def __init__(self, asin, title, authors=()):
-    self.asin = unicode(asin)
-    self.title = unicode(title)
-    self.authors = tuple(unicode(author) for author in authors)
+    self.asin = str(asin)
+    self.title = str(title)
+    self.authors = tuple(str(author) for author in authors)
 
   def __str__(self):
     if not self.authors:
-      ret = u'"{}"'.format(self.title)
+      ret = '"{}"'.format(self.title)
     elif len(self.authors) == 1:
-      ret = u'"{}" by {}'.format(self.title, self.authors[0])
+      ret = '"{}" by {}'.format(self.title, self.authors[0])
     elif len(self.authors) == 2:
-      ret = u'"{}" by {} and {}'.format(
+      ret = '"{}" by {} and {}'.format(
           self.title, self.authors[0], self.authors[1])
     else:
-      ret = u'"{}" by {}, and {}'.format(
-          self.title, u', '.join(self.authors[:-1]), self.authors[-1])
+      ret = '"{}" by {}, and {}'.format(
+          self.title, ', '.join(self.authors[:-1]), self.authors[-1])
     return ret.encode('utf8')
 
   def __repr__(self):
-    author_str = u', '.join(u'"%s"' % author for author in self.authors)
-    return (u'Book(asin={}, title="{}", authors=[{}])'
+    author_str = ', '.join('"%s"' % author for author in self.authors)
+    return ('Book(asin={}, title="{}", authors=[{}])'
             .format(self.asin, self.title, author_str)
             .encode('utf8'))
 
@@ -157,8 +157,8 @@ class _KindleCloudReaderBrowser(PhantomJS):
     user_agent: The user agent to be used for the browser.
   """
 
-  _CLOUD_READER_URL = u'https://read.amazon.com'
-  _SIGNIN_URL = u'https://www.amazon.com/ap/signin'
+  _CLOUD_READER_URL = 'https://read.amazon.com'
+  _SIGNIN_URL = 'https://www.amazon.com/ap/signin'
   _USER_AGENT = (
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) '
       'AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -208,7 +208,7 @@ class _KindleCloudReaderBrowser(PhantomJS):
     self.switch_to_default_content()
     self.get(_KindleCloudReaderBrowser._CLOUD_READER_URL)
 
-    if self.title == u'Problem loading page':
+    if self.title == 'Problem loading page':
       raise ConnectionError
 
     # Wait for either the login page or the reader to load
@@ -218,7 +218,7 @@ class _KindleCloudReaderBrowser(PhantomJS):
     self._wait(5).until(login_or_reader_loaded)
 
     try:
-      self._wait(5).until(lambda br: br.title == u'Amazon.com Sign In')
+      self._wait(5).until(lambda br: br.title == 'Amazon.com Sign In')
     except TimeoutException:
       raise BrowserError('Failed to load Kindle Cloud Reader.')
     else:
@@ -261,7 +261,7 @@ class _KindleCloudReaderBrowser(PhantomJS):
         pword_ok = pword_elem.get_attribute('value') == self._pword
         return email_ok and pword_ok
 
-      kcr_page_loaded = lambda br: br.title == u'Kindle Cloud Reader'
+      kcr_page_loaded = lambda br: br.title == 'Kindle Cloud Reader'
       try:
         self._wait(5).until(creds_entered)
         self.find_element_by_id('signInSubmit-input').click()
@@ -291,12 +291,12 @@ class _KindleCloudReaderBrowser(PhantomJS):
     These modules provide the interface used to execute API queries.
     """
     # Wait for the Module Manager to load
-    mod_mgr_script = ur"return window.hasOwnProperty('KindleModuleManager');"
+    mod_mgr_script = r"return window.hasOwnProperty('KindleModuleManager');"
     mod_mgr_loaded = lambda br: br.execute_script(mod_mgr_script)
     self._wait(5).until(mod_mgr_loaded)
 
     # Wait for the DB Client to load
-    db_client_script = dedent(ur"""
+    db_client_script = dedent(r"""
         var done = arguments[0];
         if (!window.hasOwnProperty('KindleModuleManager') ||
             !KindleModuleManager
@@ -404,8 +404,8 @@ class KindleCloudReaderAPI(object):
       A list of `KindleBook` instances corresponding to the books in the
       current user's library.
     """
-    return map(KindleCloudReaderAPI._kbm_to_book,
-               self._get_api_call('get_library_metadata'))
+    return list(map(KindleCloudReaderAPI._kbm_to_book,
+               self._get_api_call('get_library_metadata')))
 
   def get_book_progress(self, asin):
     """Returns the progress data available for a book.
@@ -432,7 +432,7 @@ class KindleCloudReaderAPI(object):
     """
     kbp_dict = self._get_api_call('get_library_progress')
     return {asin: KindleCloudReaderAPI._kbp_to_progress(kbp)
-            for asin, kbp in kbp_dict.iteritems()}
+            for asin, kbp in kbp_dict.items()}
 
   def close(self):
     """End the browser session."""
